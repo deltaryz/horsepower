@@ -1,0 +1,240 @@
+[gd_scene load_steps=27 format=3 uid="uid://0g57p64tiyqn"]
+
+[ext_resource type="Texture2D" uid="uid://baj4xukvf568b" path="res://sprites/space.png" id="1_2jdkd"]
+[ext_resource type="TileSet" uid="uid://f3wmg8detyai" path="res://tileset/tileset.tres" id="2_aylbj"]
+[ext_resource type="PackedScene" uid="uid://l0aqmv25dyrc" path="res://worker.tscn" id="3_wgsja"]
+[ext_resource type="Script" path="res://tasks.gd" id="4_2ffny"]
+[ext_resource type="Script" path="res://Resources.gd" id="5_i8but"]
+[ext_resource type="FontFile" uid="uid://cgx6noyx826by" path="res://helsinki.ttf" id="6_c4rw7"]
+[ext_resource type="FontFile" uid="uid://du7ys4pa20hix" path="res://LemonMilk.otf" id="7_hsa58"]
+[ext_resource type="AudioStream" uid="uid://b7t62ih0yv0lp" path="res://tick.mp3" id="8_04cpi"]
+[ext_resource type="AudioStream" uid="uid://c3d18spd4b7ip" path="res://woosh.mp3" id="9_td3xb"]
+[ext_resource type="AudioStream" uid="uid://ch2q72mpprwa2" path="res://wood.mp3" id="10_1i66f"]
+[ext_resource type="AudioStream" uid="uid://dcswamrqhksna" path="res://tap.mp3" id="11_rewqo"]
+[ext_resource type="AudioStream" uid="uid://40mtx1mb4xgq" path="res://set.mp3" id="12_7omg4"]
+[ext_resource type="AudioStream" uid="uid://cmrckdsmmll2l" path="res://poor.mp3" id="13_qqdk7"]
+[ext_resource type="AudioStream" uid="uid://d1oq15p34brje" path="res://death.mp3" id="14_elaio"]
+[ext_resource type="Texture2D" uid="uid://cvle7muvso4yl" path="res://costs.png" id="14_t73n5"]
+[ext_resource type="AudioStream" uid="uid://cxcrekm22do13" path="res://obelisk.mp3" id="15_v0o6q"]
+[ext_resource type="Texture2D" uid="uid://caos5odpfutfy" path="res://particle.png" id="16_2ygev"]
+[ext_resource type="Texture2D" uid="uid://cgwh7telc4km1" path="res://tutorial.png" id="18_35uvt"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ohwj4"]
+content_margin_left = 9.0
+content_margin_top = 17.0
+bg_color = Color(0.164706, 0.164706, 0.164706, 1)
+corner_radius_top_left = 24
+corner_radius_bottom_left = 24
+shadow_offset = Vector2(2, 2)
+
+[sub_resource type="LabelSettings" id="LabelSettings_j4myr"]
+line_spacing = 12.0
+font = ExtResource("7_hsa58")
+font_size = 25
+outline_size = 6
+outline_color = Color(0, 0, 0, 1)
+shadow_size = 4
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(2, 3)
+
+[sub_resource type="LabelSettings" id="LabelSettings_4khgt"]
+font = ExtResource("6_c4rw7")
+font_size = 26
+shadow_size = 4
+shadow_color = Color(0, 0, 0, 0.368627)
+shadow_offset = Vector2(2, 2)
+
+[sub_resource type="LabelSettings" id="LabelSettings_y38gj"]
+font = ExtResource("7_hsa58")
+font_color = Color(1, 1, 1, 0.639216)
+
+[sub_resource type="LabelSettings" id="LabelSettings_h0wnm"]
+font = ExtResource("7_hsa58")
+
+[sub_resource type="Curve" id="Curve_f67f3"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_otiq1"]
+curve = SubResource("Curve_f67f3")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_emod8"]
+lifetime_randomness = 0.1
+particle_flag_disable_z = true
+angle_min = -720.0
+angle_max = 720.0
+spread = 180.0
+initial_velocity_min = 10.0
+initial_velocity_max = 75.2
+angular_velocity_min = -145.03
+angular_velocity_max = 211.76
+gravity = Vector3(0, 0, 0)
+tangential_accel_min = 19.61
+tangential_accel_max = 72.48
+scale_min = 0.05
+scale_max = 0.08
+alpha_curve = SubResource("CurveTexture_otiq1")
+hue_variation_min = -0.05
+hue_variation_max = 0.1
+
+[node name="Game" type="Node2D"]
+
+[node name="ColorRect" type="ColorRect" parent="."]
+offset_left = 1280.0
+offset_top = 788.0
+offset_right = 1506.0
+offset_bottom = 847.0
+color = Color(0.564706, 0.278431, 0.709804, 1)
+
+[node name="Background" type="Sprite2D" parent="."]
+texture = ExtResource("1_2jdkd")
+centered = false
+
+[node name="TileMap" type="TileMap" parent="."]
+tile_set = ExtResource("2_aylbj")
+format = 2
+layer_0/name = "Base"
+
+[node name="Camera2D" type="Camera2D" parent="."]
+anchor_mode = 0
+zoom = Vector2(0.85, 0.85)
+
+[node name="TaskController" type="Node2D" parent="."]
+script = ExtResource("4_2ffny")
+
+[node name="BuildingSelector" type="ItemList" parent="TaskController"]
+offset_left = 1254.0
+offset_top = 9.0
+offset_right = 1605.0
+offset_bottom = 523.0
+scale = Vector2(0.8, 0.8)
+pivot_offset = Vector2(180, 0)
+focus_mode = 0
+theme_override_constants/v_separation = 24
+theme_override_font_sizes/font_size = 22
+theme_override_styles/panel = SubResource("StyleBoxFlat_ohwj4")
+auto_height = true
+item_count = 8
+item_0/text = "Tree Farm"
+item_1/text = "Rock Farm"
+item_2/text = "Housing"
+item_3/text = "Worker"
+item_4/text = "Storage"
+item_5/text = "Obelisk"
+item_6/text = "Wall"
+item_7/text = "Delete"
+
+[node name="Resources" type="Label" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = 1143.0
+offset_top = 543.0
+offset_right = 1646.0
+offset_bottom = 588.0
+grow_horizontal = 0
+scale = Vector2(0.7, 0.7)
+text = "Testing Testing"
+label_settings = SubResource("LabelSettings_j4myr")
+horizontal_alignment = 2
+script = ExtResource("5_i8but")
+logs = 100
+rocks = 100
+resource_cap = 100
+
+[node name="DELTARYZ_COM" type="Label" parent="."]
+offset_left = 1280.0
+offset_top = 802.0
+offset_right = 1506.0
+offset_bottom = 832.0
+text = "DELTARYZ.COM"
+label_settings = SubResource("LabelSettings_4khgt")
+horizontal_alignment = 1
+
+[node name="GWJ68" type="Label" parent="."]
+offset_left = 1280.0
+offset_top = 761.0
+offset_right = 1506.0
+offset_bottom = 779.0
+text = "Godot Wild Jam #68"
+label_settings = SubResource("LabelSettings_y38gj")
+horizontal_alignment = 1
+
+[node name="credits" type="Label" parent="."]
+offset_left = 1299.0
+offset_top = 691.0
+offset_right = 1534.0
+offset_bottom = 768.0
+scale = Vector2(0.8, 0.8)
+text = "PROGRAMMING   -   DELTARYZ
+SPRITE ART   -   @ThatShiiiny
+DESIGN   -   TAVI CARMICHAEL
+
+"
+label_settings = SubResource("LabelSettings_h0wnm")
+horizontal_alignment = 3
+
+[node name="ticker" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("8_04cpi")
+volume_db = 5.288
+pitch_scale = 0.71
+max_polyphony = 20
+
+[node name="woosher" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("12_7omg4")
+max_polyphony = 20
+
+[node name="wooder" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("10_1i66f")
+volume_db = -7.051
+max_polyphony = 20
+
+[node name="tapper" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("11_rewqo")
+volume_db = -1.164
+max_polyphony = 20
+
+[node name="setter" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("9_td3xb")
+max_polyphony = 20
+
+[node name="nomoney" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("13_qqdk7")
+max_polyphony = 20
+
+[node name="deathsound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("14_elaio")
+volume_db = -6.0
+
+[node name="obelisksound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("15_v0o6q")
+max_polyphony = 20
+
+[node name="Worker" parent="." instance=ExtResource("3_wgsja")]
+position = Vector2(592, 383)
+
+[node name="Worker2" parent="." instance=ExtResource("3_wgsja")]
+position = Vector2(682, 480)
+
+[node name="Worker3" parent="." instance=ExtResource("3_wgsja")]
+position = Vector2(775, 300)
+
+[node name="Prices" type="Sprite2D" parent="."]
+scale = Vector2(1.177, 1.177)
+texture = ExtResource("14_t73n5")
+centered = false
+
+[node name="ObeliskParticles" type="GPUParticles2D" parent="."]
+emitting = false
+process_material = SubResource("ParticleProcessMaterial_emod8")
+texture = ExtResource("16_2ygev")
+fixed_fps = 60
+
+[node name="Tutorial" type="Sprite2D" parent="."]
+z_index = 4096
+position = Vector2(0, 56)
+texture = ExtResource("18_35uvt")
+centered = false
+
+[connection signal="mouse_entered" from="TaskController/BuildingSelector" to="TaskController/BuildingSelector" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="TaskController/BuildingSelector" to="TaskController/BuildingSelector" method="_on_mouse_exited"]

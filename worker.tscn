@@ -1,0 +1,59 @@
+[gd_scene load_steps=6 format=3 uid="uid://l0aqmv25dyrc"]
+
+[ext_resource type="Script" path="res://worker.gd" id="1_4eew3"]
+[ext_resource type="Texture2D" uid="uid://c11typow28mkc" path="res://tileset/tilesheet.png" id="3_8xe15"]
+[ext_resource type="Texture2D" uid="uid://vsempfpeu7wr" path="res://sprites/character.png" id="3_wolt6"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g1u7s"]
+bg_color = Color(0, 0, 0, 0.709804)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+shadow_color = Color(0, 0, 0, 0.27451)
+shadow_size = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xyy3f"]
+bg_color = Color(0.717647, 0.435294, 1, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[node name="Worker" type="Marker2D"]
+position = Vector2(32, 32)
+script = ExtResource("1_4eew3")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("3_wolt6")
+
+[node name="HeldItemSprite" type="Sprite2D" parent="."]
+visible = false
+position = Vector2(12, 0)
+scale = Vector2(0.6, 0.6)
+texture = ExtResource("3_8xe15")
+offset = Vector2(0, -32)
+region_enabled = true
+region_rect = Rect2(0, 0, 64, 64)
+
+[node name="Target" type="Sprite2D" parent="."]
+modulate = Color(1, 1, 1, 0.407843)
+texture = ExtResource("3_8xe15")
+region_enabled = true
+region_rect = Rect2(192, 128, 64, 64)
+
+[node name="HungerTimer" type="Timer" parent="."]
+wait_time = 30.0
+autostart = true
+
+[node name="HungerBar" type="ProgressBar" parent="."]
+offset_left = -16.0
+offset_top = 12.0
+offset_right = 16.0
+offset_bottom = 14.0
+theme_override_styles/background = SubResource("StyleBoxFlat_g1u7s")
+theme_override_styles/fill = SubResource("StyleBoxFlat_xyy3f")
+max_value = 3.0
+value = 3.0
+show_percentage = false
