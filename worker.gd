@@ -171,21 +171,16 @@ func _process(_delta):
 			var task: datastructures.Task = TaskController.get_available_task()
 			if task != null:
 				# Make sure it actually exists
-				if task.interactable == null and task.behavior == datastructures.Behavior.WALK:
-					# TODO: stop this from happening in the first place
-					print("Ghost task detected, removing...")
-					TaskController.taskQueue.erase(task)
-				else:
-					start_task(task)
+				start_task(task)
 			# else: There are no available tasks. do nothing
 			
-		datastructures.Behavior.WALK:
+		datastructures.Behavior.WALK, datastructures.Behavior.EAT:
+			HeldItemSprite.visible = false
+			
 			if current_task.interactable != null:
 				if current_task.interactable is datastructures.Obelisk and Resources.corpses > 0:
 					set_texture(datastructures.Textures.DeadWorker)
 					HeldItemSprite.visible = true
-			else:
-				HeldItemSprite.visible = false
 			
 			if is_point_walkable(current_task.position, false):
 				if travel() == true:
@@ -251,7 +246,11 @@ func _process(_delta):
 						HeldItemSprite.visible = false
 					else:
 						# Can't afford it
+						nomoney.play()
 						_change_state(datastructures.Behavior.IDLE)
+			else:
+				# try again
+				_change_state(datastructures.Behavior.PLANT_FARM)
 				
 		datastructures.Behavior.DEPOSIT_LOG:
 			HeldItemSprite.visible = true
@@ -306,7 +305,7 @@ func travel():
 	_path = find_path(position, current_task.position)
 	
 	# make sure our target still exits
-	if _state == datastructures.Behavior.WALK:
+	if _state == datastructures.Behavior.WALK or _state == datastructures.Behavior.EAT:
 		#this ignores non-tile bodies
 		if Resources.active_interactables.has(current_task.interactable) == false:
 			# Can't do this anymore
@@ -380,24 +379,31 @@ func _change_state(new_state, randomDeath: bool = true):
 				# Don't do anything different for 3
 				
 				2:
-					# Plant farms
-					var rng = randi_range(0,4) # TODO: tweak frequency
+					var rng = randi_range(0,4)
 					if rng == 1:
-						var location = _tile_map.map_to_local(random_coordinates())
-						while is_point_walkable(location, true) == false:
-							# Keep randomizing until we find a valid spot
-							location = _tile_map.map_to_local(random_coordinates())
-							
-						current_task = datastructures.Task.new(location, datastructures.Behavior.PLANT_FARM)
-						new_state = current_task.behavior
+						_change_state(datastructures.Behavior.PLANT_FARM)
+						new_state = datastructures.Behavior.PLANT_FARM
 						
 				1:
 					# Seek a fully grown farm
 					var rng = randi_range(0,4) # TODO: tweak frequency
 					if rng != 1 and Resources.food_sources.size() > 0:
-						var target: datastructures.Farm = Resources.food_sources.pick_random()
-						current_task = target.task
-						new_state = current_task.behavior
+						_change_state(datastructures.Behavior.EAT)
+						new_state = datastructures.Behavior.EAT
+						
+		datastructures.Behavior.EAT:
+			var target: datastructures.Farm = Resources.food_sources.pick_random()
+			# TODO: pick closest
+			current_task = target.task
+			new_state = current_task.behavior
+						
+		datastructures.Behavior.PLANT_FARM:
+			var location = _tile_map.map_to_local(random_coordinates())
+			while is_point_walkable(location, true) == false:
+				# Keep randomizing until we find a valid spot
+				location = _tile_map.map_to_local(random_coordinates())
+				
+			current_task = datastructures.Task.new(location, new_state)
 			
 		datastructures.Behavior.PLANT_SAPLING, datastructures.Behavior.PLANT_ROCK:
 			# Pick random spot
@@ -431,6 +437,7 @@ func random_coordinates():
 func kill():
 	print("Worker died at " + str(position))
 	deathsound.play()
+	current_task.reset()
 	if particles != null:
 		particles.emitting = false
 		particles.queue_free()

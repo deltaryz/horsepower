@@ -14,6 +14,9 @@ var worker = preload("res://worker.tscn")
 var taskQueue = []
 var workers = []
 
+func _ready():
+	Engine.time_scale = 0
+
 # Creates a new worker
 func create_worker(pos: Vector2):
 	var newWorker = worker.instantiate()
@@ -74,7 +77,9 @@ func _unhandled_input(event):
 		#var newWorker = create_worker(get_global_mouse_position())
 		#newWorker.speed = 250
 	if event.is_action_pressed(&"move_to"):
-		# Remove tutorial
+		# Remove tutorial & set timescale
+		if Engine.time_scale == 0:
+			Engine.time_scale = 1
 		if Tutorial != null:
 			Tutorial.visible = false
 			Tutorial.queue_free()

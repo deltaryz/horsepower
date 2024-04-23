@@ -4,6 +4,7 @@
 enum Behavior { 
 	IDLE,
 	WALK,
+	EAT,
 	PLANT_SAPLING,
 	PLANT_ROCK,
 	PLANT_FARM,
