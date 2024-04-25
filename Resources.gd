@@ -15,6 +15,23 @@ var active_interactables = []
 @onready var task_controller = $"../TaskController"
 @onready var nomoney: AudioStreamPlayer = $"../nomoney"
 
+# Retrieve a dictionary of storages in order by distance from given location
+func get_storage_by_distance(pos: Vector2):
+	var distance_storages = {}
+	for box in storages:
+		var distance = pos.distance_to(box.position)
+		distance_storages[distance] = box
+	
+	var keys = distance_storages.keys()
+	keys.sort()
+	
+	var returned_array = []
+	for key in keys:
+		returned_array.append(distance_storages[key])
+	
+	return returned_array
+	
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	pass # Replace with function body.

@@ -15,6 +15,7 @@ var taskQueue = []
 var workers = []
 
 func _ready():
+	Tutorial.visible = true
 	Engine.time_scale = 0
 
 # Creates a new worker
@@ -46,6 +47,31 @@ func get_available_task(random = false):
 		# Time to pick a random one
 		if not available.is_empty():
 			return available.pick_random()
+			
+# Returns array of available tasks in order by distance
+func get_available_task_by_distance(pos: Vector2):
+	if taskQueue.size() != 0:
+		
+		# construct available task list
+		var available = []
+		for task: datastructures.Task in taskQueue:
+			if task != null:
+				if(task.status == datastructures.Status.AVAILABLE):
+					available.append(task)
+	
+		var distance_tasks = {}
+		for task in available:
+			var distance = pos.distance_to(task.position)
+			distance_tasks[distance] = task
+			
+		var keys = distance_tasks.keys()
+		keys.sort()
+		
+		var returned_array = []
+		for key in keys:
+			returned_array.append(distance_tasks[key])
+			
+		return returned_array
 		
 # Check if a provided task is present in the current array
 func check_task(task: datastructures.Task):

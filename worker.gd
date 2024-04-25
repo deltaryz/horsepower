@@ -3,7 +3,7 @@ extends Node2D
 const datastructures = preload("res://datastructures.gd")
 
 const MASS = 10.0
-const ARRIVE_DISTANCE = 10.0
+const ARRIVE_DISTANCE = 12.0
 
 @export var speed: float = 200.0
 
@@ -80,7 +80,7 @@ func _ready():
 	remove_child(HungerBar)
 	_tile_map.add_child(HungerBar)
 	
-	_change_state(datastructures.Behavior.IDLE)
+	_state = datastructures.Behavior.IDLE
 	# Region should match the size of the playable area plus one (in tiles).
 	_astar.region = BOUNDS
 	_astar.cell_size = CELL_SIZE
@@ -91,7 +91,7 @@ func _ready():
 	_astar.update()
 
 # Recalculate collision
-func recalculate_solids(solid_destination: bool = false):
+func recalculate_solids():
 	# Determine which tiles are solid
 	for i in range(_astar.region.position.x, _astar.region.end.x):
 		for j in range(_astar.region.position.y, _astar.region.end.y):
@@ -103,16 +103,17 @@ func recalculate_solids(solid_destination: bool = false):
 				_astar.set_point_solid(pos)
 			else:
 				_astar.set_point_solid(pos, false)
-	if solid_destination == false:
-		# Make sure our destination is considered walkable
-		if current_task != null:
-			_astar.set_point_solid(_tile_map.local_to_map(current_task.position), false)
 
 # Check if tile is solid based on local position
 func is_point_walkable(local_position: Vector2, solid_destination: bool = false):
 	var map_position = _tile_map.local_to_map(local_position)
 	if _astar.is_in_boundsv(map_position):
-		recalculate_solids(solid_destination)
+		recalculate_solids()
+		
+		# Make sure destination is walkable
+		if solid_destination == false:
+			_astar.set_point_solid(_tile_map.local_to_map(local_position), false)
+			
 		return not _astar.is_point_solid(map_position)
 	return false
 
@@ -122,7 +123,7 @@ func clear_path():
 		_path.clear()
 		
 # Perform pathfinding from local_start_point to local_end_point
-func find_path(local_start_point, local_end_point):
+func find_path(local_start_point, local_end_point, solid_destination = false):
 	clear_path()
 	
 	recalculate_solids()
@@ -136,6 +137,10 @@ func find_path(local_start_point, local_end_point):
 	_start_point.y = clamp(_start_point.y, BOUNDS.position.y, BOUNDS.position.y + BOUNDS.size.y - 1)
 	_end_point.x = clamp(_end_point.x, BOUNDS.position.x, BOUNDS.position.x + BOUNDS.size.x - 1)
 	_end_point.y = clamp(_end_point.y, BOUNDS.position.y, BOUNDS.position.y + BOUNDS.size.y - 1)
+	
+	# Make sure destination is walkable
+	if solid_destination == false:
+		_astar.set_point_solid(_end_point, false)
 	
 	# Perform pathfinding
 	_path = _astar.get_point_path(_start_point, _end_point)
@@ -166,13 +171,7 @@ func _process(_delta):
 		
 		datastructures.Behavior.IDLE:
 			HeldItemSprite.visible = false
-			
-			# Check for available tasks
-			var task: datastructures.Task = TaskController.get_available_task()
-			if task != null:
-				# Make sure it actually exists
-				start_task(task)
-			# else: There are no available tasks. do nothing
+			_change_state(datastructures.Behavior.IDLE, false)
 			
 		datastructures.Behavior.WALK, datastructures.Behavior.EAT:
 			HeldItemSprite.visible = false
@@ -361,16 +360,10 @@ func _walk_to(local_position):
 
 # Transition between states
 func _change_state(new_state, randomDeath: bool = true):
+	Target.visible = false
 	match new_state:
 		
 		datastructures.Behavior.IDLE:
-			
-			# random chance to kill itself
-			# TODO: remove this
-			#if randomDeath == true:
-				#var random = randi_range(0, 100)
-				#if random == 69 and TaskController.workers.size() > 1:
-					#kill()
 			
 			clear_path()
 			
@@ -379,7 +372,7 @@ func _change_state(new_state, randomDeath: bool = true):
 				# Don't do anything different for 3
 				
 				2:
-					var rng = randi_range(0,4)
+					var rng = randi_range(0,5)
 					if rng == 1:
 						_change_state(datastructures.Behavior.PLANT_FARM)
 						new_state = datastructures.Behavior.PLANT_FARM
@@ -391,6 +384,24 @@ func _change_state(new_state, randomDeath: bool = true):
 						_change_state(datastructures.Behavior.EAT)
 						new_state = datastructures.Behavior.EAT
 						
+			# Are we still idle??
+			if new_state == datastructures.Behavior.IDLE:
+				
+				# Pick closest accessible task
+				var tasks = TaskController.get_available_task_by_distance(position)
+				if tasks != null:
+					
+					# Removing inaccessible
+					for task in tasks:
+						var path = find_path(position, task.position)
+						if path.size() == 0:
+							# Not accessible
+							tasks.erase(task)
+							
+					if tasks.size() > 0:
+						start_task(tasks[0])
+						new_state = tasks[0].behavior
+						
 		datastructures.Behavior.EAT:
 			var target: datastructures.Farm = Resources.food_sources.pick_random()
 			# TODO: pick closest
@@ -398,6 +409,8 @@ func _change_state(new_state, randomDeath: bool = true):
 			new_state = current_task.behavior
 						
 		datastructures.Behavior.PLANT_FARM:
+			
+			# TODO: make player zone where farms can be placed
 			var location = _tile_map.map_to_local(random_coordinates())
 			while is_point_walkable(location, true) == false:
 				# Keep randomizing until we find a valid spot
@@ -416,12 +429,26 @@ func _change_state(new_state, randomDeath: bool = true):
 			
 		datastructures.Behavior.DEPOSIT_LOG, datastructures.Behavior.DEPOSIT_ROCK, datastructures.Behavior.DEPOSIT_CORPSE:
 			# Pick a storage receptacle
-			# TODO: actually determine closest one
 			if Resources.storages.size() > 0:
-				var target_storage = Resources.storages.pick_random()
-				current_task = datastructures.Task.new(target_storage.position, new_state)
+			
+				# Storages in order by distance
+				var candidates = Resources.get_storage_by_distance(position)
+				
+				# Remove inaccessible from candidates
+				for box in candidates:
+					var path = find_path(position, box.position)
+					if path.size() == 0:
+						# Not accessible
+						candidates.erase(box)
+						
+				if candidates.size() == 0:
+					# No candidatges
+					nomoney.play()
+					new_state = datastructures.Behavior.IDLE
+				else:
+					current_task = datastructures.Task.new(candidates[0].position, new_state)
+				
 			else:
-				# TODO: indicate player needs to build storage
 				nomoney.play()
 				new_state = datastructures.Behavior.IDLE
 
@@ -437,7 +464,8 @@ func random_coordinates():
 func kill():
 	print("Worker died at " + str(position))
 	deathsound.play()
-	current_task.reset()
+	if current_task != null:
+		current_task.reset()
 	if particles != null:
 		particles.emitting = false
 		particles.queue_free()
