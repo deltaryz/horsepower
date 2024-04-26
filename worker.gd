@@ -56,12 +56,9 @@ func _reduce_hunger_state():
 	match hungerLevel:
 		3:
 			hungerLevel -= 1
-			HungerBar.value = hungerLevel
 		2:
 			hungerLevel -= 1
-			HungerBar.value = hungerLevel
 		1:
-			hungerLevel -= 1
 			kill()
 
 # Run when object initializes
@@ -157,6 +154,9 @@ func _process(_delta):
 	HungerBar.position += Vector2(-16,12)
 	HungerBar.z_index = 100
 	
+	HungerBar.value = HungerTimer.time_left + ((hungerLevel - 1) * 30)
+	
+	
 	if particles != null:
 		particles.position = position
 	
@@ -239,7 +239,7 @@ func _process(_delta):
 			if is_point_walkable(current_task.position, true):
 				if travel() == true:
 					if Resources.add_resource(-5,-5,0) == true:
-						datastructures.Farm.new(_tile_map, current_task.position, 15, TaskController.taskQueue)
+						datastructures.Farm.new(_tile_map, current_task.position, 10, TaskController.taskQueue)
 						_change_state(datastructures.Behavior.IDLE)
 						tapper.play()
 						HeldItemSprite.visible = false
@@ -285,6 +285,7 @@ func _process(_delta):
 				# Successfully made it to storage
 				# TODO: indication when full
 				wooder.play()
+				HeldItemSprite.visible = false
 				Resources.add_resource(0,0,1)
 				_change_state(datastructures.Behavior.IDLE)
 
@@ -434,19 +435,20 @@ func _change_state(new_state, randomDeath: bool = true):
 				# Storages in order by distance
 				var candidates = Resources.get_storage_by_distance(position)
 				
-				# Remove inaccessible from candidates
-				for box in candidates:
-					var path = find_path(position, box.position)
-					if path.size() == 0:
-						# Not accessible
-						candidates.erase(box)
-						
-				if candidates.size() == 0:
-					# No candidatges
-					nomoney.play()
-					new_state = datastructures.Behavior.IDLE
-				else:
-					current_task = datastructures.Task.new(candidates[0].position, new_state)
+				if candidates != null:
+					# Remove inaccessible from candidates
+					for box in candidates:
+						var path = find_path(position, box.position)
+						if path.size() == 0:
+							# Not accessible
+							candidates.erase(box)
+							
+					if candidates.size() == 0:
+						# No candidatges
+						nomoney.play()
+						new_state = datastructures.Behavior.IDLE
+					else:
+						current_task = datastructures.Task.new(candidates[0].position, new_state)
 				
 			else:
 				nomoney.play()

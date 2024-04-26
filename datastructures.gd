@@ -298,7 +298,7 @@ class Farm extends Interactable:
 	func interact(worker) -> Behavior:
 		setter.play() # TODO: make unique sfx for eating
 		worker.hungerLevel = 3
-		worker.HungerBar.value = 3
+		worker.HungerTimer.start()
 		resources.food_sources.erase(self)
 		destroy()
 		return Behavior.IDLE
@@ -308,7 +308,6 @@ class Farm extends Interactable:
 		match growth:
 			1:
 				set_tile_texture(Textures.Farm2)
-				growth = 2
 			2:
 				
 				# pick random texture
@@ -316,9 +315,14 @@ class Farm extends Interactable:
 					set_tile_texture(Textures.Farm3)
 				else:
 					set_tile_texture(Textures.Farm3Alt)
-				
-				growth = 3
 				resources.food_sources.append(self)
+			3:
+				# remove food if not eaten
+				print("food spoiled")
+				resources.food_sources.erase(self)
+				destroy()
+				
+		growth = growth + 1
 
 class Logger extends Interactable:
 	func _init(map: TileMap, pos: Vector2, tickrate: int, queue):
